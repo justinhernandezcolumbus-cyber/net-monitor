@@ -106,6 +106,26 @@ def run_ping():
     # 5. return both values
     print(f"Latency: {avg_latency}ms | Jitter: {jitter}ms | Packet Loss: {packet_loss}%")
     return avg_latency, jitter, packet_loss
+
+def write_log(check_type, avg_latency=None, jitter=None, 
+              packet_loss=None, download=None, upload=None,
+              alert_triggered=False, alert_reason=""):
+    
+    with open(CONFIG["log_file_name"], "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            check_type,
+            avg_latency,
+            jitter,
+            packet_loss,
+            download,
+            upload,
+            alert_triggered,
+            alert_reason
+        ])
+
 # -- MAIN ------------------------------------------------
 init_log()
-run_ping()
+avg_latency, jitter, packet_loss = run_ping()
+write_log("ping", avg_latency=avg_latency, jitter=jitter, packet_loss=packet_loss)
