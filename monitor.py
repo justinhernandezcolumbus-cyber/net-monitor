@@ -30,6 +30,7 @@ import csv          # reads and writes CSV files
 import datetime     # timestamps
 import os           # allows app to interact with OS
 import platform     # detects the OS
+import re           # searches for patterns in text
 import schedule     # runs checks on a timer
 import speedtest    # measures download/upload speed
 import subprocess   # runs system commands like ping
@@ -71,7 +72,8 @@ def init_log():
             writer.writerow([
                 "timestamp",
                 "check_type",
-                "latency_ms",
+                "avg_latency_ms",
+                "jitter",
                 "packet_loss_pct",
                 "download_mbps",
                 "upload_mbps",
@@ -80,5 +82,27 @@ def init_log():
                 ])
     else:
         pass   # file already exists, do nothing
+    
+def run_ping():
+    # 1. build the correct ping command based on detected_os
+    if detected_os == "Windows":
+        command = ["ping", "-n", str(CONFIG["ping_count"]), CONFIG["ping_host"]]
+    else: 
+        command = ["ping", "-c", str(CONFIG["ping_count"]), CONFIG["ping_host"]]
+    # 2. run it with subprocess
+    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
+    print(result.stdout)
+    # 3. parse latency from the output using regex
+    avg_match = re.search(r"Average\s*=\s*(\d+)ms", result.stdout)
+    min_match = re.search(r"Minimum\s*=\s*(\d+)ms", result.stdout)
+    max_match = re.search(r"Maximum\s*=\s*(\d+)ms", result.stdout)
+    avg_latency = int(avg_match.group(1)) if avg_match else None
+    min_latency = int(min_match.group(1)) if min_match else None
+    max_latency = int(max_match.group(1)) if max_match else None
+    jitter = max_latency - min_latency if min_latency and max_latency else None
+    # 4. parse packet loss from the output using regex
+    # 5. return both values
+
 # -- MAIN ------------------------------------------------
 init_log()
+run_ping()
