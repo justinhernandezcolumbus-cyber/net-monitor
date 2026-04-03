@@ -26,16 +26,19 @@
 # It returns "Windows", "Linux", or "Darwin" (macOS)
 # Store the result, and use it later when building the ping command
 
-import subprocess   # runs system commands like ping
-import platform     # detects the OS
 import csv          # reads and writes CSV files
 import datetime     # timestamps
-import time         # sleep, timing
-import sys          # reads command line arguments (like "python monitor.py ping")
-
+import os           # allows app to interact with OS
+import platform     # detects the OS
 import schedule     # runs checks on a timer
 import speedtest    # measures download/upload speed
+import subprocess   # runs system commands like ping
+import sys          # reads command line arguments (like "python monitor.py ping")
+import time         # sleep, timing
+
 from plyer import notification   # sends desktop alerts
+
+log_file_name = "net_monitor.csv"
 
 CONFIG = {
     "ping_host": "8.8.8.8",        # string
@@ -46,11 +49,36 @@ CONFIG = {
         "min_download_mbps": 25.0, # float
         "min_upload_mbps": 5.0,    # float
     },
-    "log_file_name": "net_monitor.csv",           # string
+    "log_file_name": log_file_name,           # string
     "ping_interval_minutes": 5,    # integer
     "speed_interval_minutes": 30,  # integer
     "alert_cooldowns": 15,         # integer
 }
 
-detected_os = platform.system()
+detected_os = platform.system() # variable_name = some_function()
 print(f"Detected OS: {detected_os}")
+
+# --4. LOG INITIALIZATION ----------------------------
+# Check if the log file exists
+# If not, create it and write the header row
+# If it does exist, leave it alone
+
+def init_log():
+    if not os.path.exists(CONFIG["log_file_name"]):
+        # open the file and write the header row
+        with open(CONFIG["log_file_name"], "w", newline="") as f:
+            writer = csv.writer(f) # creates a CSV writer object pointed at your open file
+            writer.writerow([
+                "timestamp",
+                "check_type",
+                "latency_ms",
+                "packet_loss_pct",
+                "download_mbps",
+                "upload_mbps",
+                "alert_triggered",
+                "alert_reason",
+                ])
+    else:
+        pass   # file already exists, do nothing
+# -- MAIN ------------------------------------------------
+init_log()

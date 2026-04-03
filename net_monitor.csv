@@ -1,0 +1,1 @@
+timestamp,check_type,latency_ms,packet_loss_pct,download_mbps,upload_mbps,alert_triggered,alert_reason
