@@ -101,8 +101,11 @@ def run_ping():
     max_latency = int(max_match.group(1)) if max_match else None
     jitter = max_latency - min_latency if min_latency and max_latency else None
     # 4. parse packet loss from the output using regex
+    loss_match = re.search(r"\((\d+)%", result.stdout)
+    packet_loss = int(loss_match.group(1)) if loss_match else None
     # 5. return both values
-
+    print(f"Latency: {avg_latency}ms | Jitter: {jitter}ms | Packet Loss: {packet_loss}%")
+    return avg_latency, jitter, packet_loss
 # -- MAIN ------------------------------------------------
 init_log()
 run_ping()
