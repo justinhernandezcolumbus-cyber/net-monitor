@@ -124,8 +124,24 @@ def write_log(check_type, avg_latency=None, jitter=None,
             alert_triggered,
             alert_reason
         ])
+        
+def check_thresholds(avg_latency=None, packet_loss=None, download=None, upload=None):
+    
+    alerts = []   # empty list
+
+    if avg_latency is not None and avg_latency > CONFIG["thresholds"]["max_latency_ms"]:
+        alerts.append(f"High latency: {avg_latency}ms")
+
+    if packet_loss is not None and packet_loss > CONFIG["thresholds"]["max_packet_loss"]:
+        alerts.append(f"High packet loss: {packet_loss}%")
+
+    alert_triggered = len(alerts) > 0   # True if list has anything in it
+    alert_reason = "; ".join(alerts)     # joins list into one string
+    return alert_triggered, alert_reason
 
 # -- MAIN ------------------------------------------------
 init_log()
 avg_latency, jitter, packet_loss = run_ping()
-write_log("ping", avg_latency=avg_latency, jitter=jitter, packet_loss=packet_loss)
+alert_triggered, alert_reason = check_thresholds(avg_latency=avg_latency, packet_loss=packet_loss)
+write_log("ping", avg_latency=avg_latency, jitter=jitter, packet_loss=packet_loss,
+          alert_triggered=alert_triggered, alert_reason=alert_reason)
