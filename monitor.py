@@ -153,17 +153,28 @@ def check_thresholds(avg_latency=None, packet_loss=None, download=None, upload=N
     alert_reason = "; ".join(alerts)     # joins list into one string
     return alert_triggered, alert_reason
 
+def send_alert(alert_triggered, alert_reason):
+    if alert_triggered:
+        #fire the notification
+        notification.notify(
+            title="Net Monitor",
+            message=alert_reason,
+            timeout=10
+        )
+
 # -- MAIN ------------------------------------------------
 init_log()
 # Splitting into 2 blocks so that speed test and ping can be ran on 2 different schedules. If we put them in the same block, they would both run every 5 minutes (or whatever the ping interval is set to)
 # -- ping check --
 avg_latency, jitter, packet_loss = run_ping()
 alert_triggered, alert_reason = check_thresholds(avg_latency=avg_latency, packet_loss=packet_loss)
+send_alert(alert_triggered, alert_reason)
 write_log("ping", avg_latency=avg_latency, jitter=jitter, packet_loss=packet_loss,
           alert_triggered=alert_triggered, alert_reason=alert_reason)
 
 # -- speed test --
 download, upload = run_speedtest()
 alert_triggered, alert_reason = check_thresholds(download=download, upload=upload)
+send_alert(alert_triggered, alert_reason)
 write_log("speed", download=download, upload=upload,
           alert_triggered=alert_triggered, alert_reason=alert_reason)

@@ -3,3 +3,6 @@ timestamp,check_type,avg_latency_ms,jitter,packet_loss_pct,download_mbps,upload_
 2026-04-03 21:53:12,ping,31,49,0,,,False,
 2026-04-03 22:20:24,ping,26,38,0,,,False,
 2026-04-03 22:20:47,speed,,,,92.18,11.31,False,
+2026-04-03 22:34:44,ping,24,12,0,,,True,High latency: 24ms
+2026-04-03 22:36:00,ping,29,23,0,,,False,
+2026-04-03 22:36:23,speed,,,,89.4,11.12,False,
