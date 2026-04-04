@@ -124,6 +124,14 @@ def write_log(check_type, avg_latency=None, jitter=None,
             alert_triggered,
             alert_reason
         ])
+
+def run_speedtest():
+    st = speedtest.Speedtest()
+    st.get_best_server()
+    download = round(st.download() / 1_000_000, 2)  # convert to Mbps
+    upload = round(st.upload() / 1_000_000, 2)      # convert to Mbps
+    print(f"Download: {download:.2f} Mbps | Upload: {upload:.2f} Mbps")
+    return download, upload
         
 def check_thresholds(avg_latency=None, packet_loss=None, download=None, upload=None):
     
@@ -134,6 +142,12 @@ def check_thresholds(avg_latency=None, packet_loss=None, download=None, upload=N
 
     if packet_loss is not None and packet_loss > CONFIG["thresholds"]["max_packet_loss"]:
         alerts.append(f"High packet loss: {packet_loss}%")
+        
+    if download is not None and download < CONFIG["thresholds"]["min_download_mbps"]:
+        alerts.append(f"Low download speed: {download} Mbps")
+        
+    if upload is not None and upload < CONFIG["thresholds"]["min_upload_mbps"]:
+        alerts.append(f"Low upload speed: {upload} Mbps")
 
     alert_triggered = len(alerts) > 0   # True if list has anything in it
     alert_reason = "; ".join(alerts)     # joins list into one string
@@ -141,7 +155,15 @@ def check_thresholds(avg_latency=None, packet_loss=None, download=None, upload=N
 
 # -- MAIN ------------------------------------------------
 init_log()
+# Splitting into 2 blocks so that speed test and ping can be ran on 2 different schedules. If we put them in the same block, they would both run every 5 minutes (or whatever the ping interval is set to)
+# -- ping check --
 avg_latency, jitter, packet_loss = run_ping()
 alert_triggered, alert_reason = check_thresholds(avg_latency=avg_latency, packet_loss=packet_loss)
 write_log("ping", avg_latency=avg_latency, jitter=jitter, packet_loss=packet_loss,
+          alert_triggered=alert_triggered, alert_reason=alert_reason)
+
+# -- speed test --
+download, upload = run_speedtest()
+alert_triggered, alert_reason = check_thresholds(download=download, upload=upload)
+write_log("speed", download=download, upload=upload,
           alert_triggered=alert_triggered, alert_reason=alert_reason)
