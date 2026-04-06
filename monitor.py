@@ -95,6 +95,8 @@ def run_ping():
     except subprocess.TimeoutExpired:
         print("Ping timed out.")
         return None, None, None
+    print(result.stdout)
+    print("--- RAW OUTPUT ABOVE ---")  # temporary debug line
     # 3. parse latency from the output using regex
     if detected_os == "Windows":
         avg_match = re.search(r"Average\s*=\s*(\d+)ms", result.stdout)
