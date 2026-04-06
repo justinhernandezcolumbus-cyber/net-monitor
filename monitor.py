@@ -170,13 +170,17 @@ def check_thresholds(avg_latency=None, packet_loss=None, download=None, upload=N
 
 def send_alert(alert_triggered, alert_reason):
     if alert_triggered:
-        #fire the notification
-        notification.notify(
-            title="Net Monitor",
-            message=alert_reason,
-            app_name="Net Monitor",
-            timeout=10
-        )
+        try:
+            #fire the notification
+            notification.notify(
+                title="Net Monitor",
+                message=alert_reason,
+                app_name="Net Monitor",
+                timeout=10
+            )
+        except Exception as e:
+            print(f"Alert notification failed: {e}")
+            print(f"ALERT: {alert_reason}")
 
 def check_ping():
     avg_latency, jitter, packet_loss = run_ping()
