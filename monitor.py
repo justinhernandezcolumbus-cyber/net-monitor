@@ -95,20 +95,18 @@ def run_ping():
     except subprocess.TimeoutExpired:
         print("Ping timed out.")
         return None, None, None
-    print(result.stdout)
-    print("--- RAW OUTPUT ABOVE ---")  # temporary debug line
     # 3. parse latency from the output using regex
     if detected_os == "Windows":
         avg_match = re.search(r"Average\s*=\s*(\d+)ms", result.stdout)
         min_match = re.search(r"Minimum\s*=\s*(\d+)ms", result.stdout)
         max_match = re.search(r"Maximum\s*=\s*(\d+)ms", result.stdout)
     else:
-        avg_match = re.search(r"min/avg/max/stddev\s*=\s*[\d.]+/([\d.]+)/", result.stdout)
-        min_match = re.search(r"min/avg/max/stddev\s*=\s*([\d.]+)/", result.stdout)
-        max_match = re.search(r"min/avg/max/stddev\s*=\s*[\d.]+/[\d.]+/([\d.]+)/", result.stdout)
-    avg_latency = int(avg_match.group(1)) if avg_match else None
-    min_latency = int(min_match.group(1)) if min_match else None
-    max_latency = int(max_match.group(1)) if max_match else None
+        avg_match = re.search(r"round-trip min/avg/max/stddev\s*=\s*[\d.]+/([\d.]+)/", result.stdout)
+        min_match = re.search(r"round-trip min/avg/max/stddev\s*=\s*([\d.]+)/", result.stdout)
+        max_match = re.search(r"round-trip min/avg/max/stddev\s*=\s*[\d.]+/[\d.]+/([\d.]+)/", result.stdout)
+    avg_latency = int(float(avg_match.group(1))) if avg_match else None
+    min_latency = int(float(min_match.group(1))) if min_match else None
+    max_latency = int(float(max_match.group(1))) if max_match else None
     jitter = max_latency - min_latency if min_latency and max_latency else None
     # 4. parse packet loss from the output using regex
     if detected_os == "Windows":

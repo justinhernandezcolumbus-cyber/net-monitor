@@ -1,0 +1,2 @@
+timestamp,check_type,avg_latency_ms,jitter,packet_loss_pct,download_mbps,upload_mbps,alert_triggered,alert_reason
+2026-04-05 23:21:31,ping,23,14,0,,,False,
