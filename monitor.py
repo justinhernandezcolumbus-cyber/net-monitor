@@ -30,7 +30,7 @@ import csv          # reads and writes CSV files
 import datetime     # timestamps
 import os           # allows app to interact with OS
 import platform     # detects the OS
-import re           # searches for patterns in text
+import re           # searches for patterns in text (used to parse ping output)
 import schedule     # runs checks on a timer
 import speedtest    # measures download/upload speed
 import subprocess   # runs system commands like ping
@@ -90,19 +90,30 @@ def run_ping():
     else: 
         command = ["ping", "-c", str(CONFIG["ping_count"]), CONFIG["ping_host"]]
     # 2. run it with subprocess
-    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
-    print(result.stdout)
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        print("Ping timed out.")
+        return None, None, None
     # 3. parse latency from the output using regex
-    avg_match = re.search(r"Average\s*=\s*(\d+)ms", result.stdout)
-    min_match = re.search(r"Minimum\s*=\s*(\d+)ms", result.stdout)
-    max_match = re.search(r"Maximum\s*=\s*(\d+)ms", result.stdout)
+    if detected_os == "Windows":
+        avg_match = re.search(r"Average\s*=\s*(\d+)ms", result.stdout)
+        min_match = re.search(r"Minimum\s*=\s*(\d+)ms", result.stdout)
+        max_match = re.search(r"Maximum\s*=\s*(\d+)ms", result.stdout)
+    else:
+        avg_match = re.search(r"min/avg/max/stddev\s*=\s*[\d.]+/([\d.]+)/", result.stdout)
+        min_match = re.search(r"min/avg/max/stddev\s*=\s*([\d.]+)/", result.stdout)
+        max_match = re.search(r"min/avg/max/stddev\s*=\s*[\d.]+/[\d.]+/([\d.]+)/", result.stdout)
     avg_latency = int(avg_match.group(1)) if avg_match else None
     min_latency = int(min_match.group(1)) if min_match else None
     max_latency = int(max_match.group(1)) if max_match else None
     jitter = max_latency - min_latency if min_latency and max_latency else None
     # 4. parse packet loss from the output using regex
-    loss_match = re.search(r"\((\d+)%", result.stdout)
-    packet_loss = int(loss_match.group(1)) if loss_match else None
+    if detected_os == "Windows":
+        loss_match = re.search(r"\((\d+)%", result.stdout)
+    else:
+        loss_match = re.search(r"(\d+\.?\d*)% packet loss", result.stdout)
+    packet_loss = int(float(loss_match.group(1))) if loss_match else None
     # 5. return both values
     print(f"Latency: {avg_latency}ms | Jitter: {jitter}ms | Packet Loss: {packet_loss}%")
     return avg_latency, jitter, packet_loss
@@ -126,12 +137,16 @@ def write_log(check_type, avg_latency=None, jitter=None,
         ])
 
 def run_speedtest():
-    st = speedtest.Speedtest()
-    st.get_best_server()
-    download = round(st.download() / 1_000_000, 2)  # convert to Mbps
-    upload = round(st.upload() / 1_000_000, 2)      # convert to Mbps
-    print(f"Download: {download:.2f} Mbps | Upload: {upload:.2f} Mbps")
-    return download, upload
+    try:
+        st = speedtest.Speedtest()
+        st.get_best_server()
+        download = round(st.download() / 1_000_000, 2)  # convert to Mbps
+        upload = round(st.upload() / 1_000_000, 2)      # convert to Mbps
+        print(f"Download: {download:.2f} Mbps | Upload: {upload:.2f} Mbps")
+        return download, upload
+    except Exception as e:
+        print(f"Speed test failed: {e}")
+        return None, None
         
 def check_thresholds(avg_latency=None, packet_loss=None, download=None, upload=None):
     
