@@ -47,7 +47,7 @@ CONFIG = {
     "thresholds": {
         "max_latency_ms": 80,      # integer
         "max_packet_loss": 5,      # integer
-        "min_download_mbps": 25.0, # float
+        "min_download_mbps": 50.0, # float
         "min_upload_mbps": 5.0,    # float
     },
     "log_file_name": log_file_name,           # string
